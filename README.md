@@ -21,8 +21,8 @@ Linux, use your distribution's package manager.
 
 ## Run
 
-From the repository root, the quick-detect script prints details for the
-connected device:
+From the repository root, the quick-detect script produces a report for every
+connected iOS device, including battery details when the device exposes them:
 
 ```bash
 chmod +x iphone-fixer-detect.sh
@@ -35,7 +35,7 @@ If you prefer not to set the executable bit, run it with Bash:
 bash iphone-fixer-detect.sh
 ```
 
-When multiple devices are connected, pass the target ID:
+To report only one of several connected devices, pass its device ID:
 
 ```bash
 ./iphone-fixer-detect.sh --udid DEVICE_UDID
@@ -50,31 +50,38 @@ chmod +x bin/iphone-fixer
 ./bin/iphone-fixer status
 ./bin/iphone-fixer info
 ./bin/iphone-fixer info --udid DEVICE_UDID
+./bin/iphone-fixer report
 ```
 
 You can also run the Python CLI directly:
 
 ```bash
-python3 iphone_fixer/cli.py info
+python3 iphone_fixer/cli.py report
 ```
 
-Commands only read information; this project does not perform restores,
-jailbreaks, downgrades, or other device modifications.
+Battery data is read from the device's battery information domain. Some iOS
+versions or device states may not expose every field; unavailable values are
+shown as `Unavailable`. Commands only read information; this project does not
+perform restores, jailbreaks, downgrades, or other device modifications.
 
 ## Example output
 
 ```text
 $ ./iphone-fixer-detect.sh
-Device:       Alex's iPhone
-Product type: iPhone15,2
-iOS version:  17.5.1
-Build:        21F90
+Device ID:    0edc5b94c4f4a2b89535c7f11b07e5f0594e2bdf
+Device:       iPhone
+Product type: iPhone8,1
+iOS version:  15.8.8
+Build:        19H422
+Battery:      82%
+Charging:     No
+External power: No
 Status:       Connected
 ```
 
-Output depends on the connected device and installed `libimobiledevice`
-version. With no device connected, the tool explains how to check the USB
-connection and trust prompt. Device/tool errors are printed to stderr.
+With multiple devices, a blank line separates each device report. With no
+device connected, the tool says so and exits with status 2. Device/tool errors
+are printed to stderr.
 
 ## Project layout
 
@@ -86,7 +93,7 @@ iPhone-Fixer/
 │   ├── __init__.py
 │   ├── cli.py             # CLI commands and output
 │   └── device.py          # libimobiledevice detection and queries
-├── iphone-fixer-detect.sh # Quick device-info command
+├── iphone-fixer-detect.sh # All-device report shortcut
 ├── LICENSE
 └── README.md
 ```

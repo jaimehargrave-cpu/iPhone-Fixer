@@ -2,7 +2,6 @@
 
 import shutil
 import subprocess
-import sys
 from typing import Dict, List, Optional
 
 
@@ -44,21 +43,38 @@ def connected_devices() -> List[str]:
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
+def read_value(udid: str, key: str, domain: Optional[str] = None) -> Optional[str]:
+    """Read one device value, returning None when unavailable."""
+    command = ["ideviceinfo", "-u", udid]
+    if domain:
+        command.extend(["-q", domain])
+    command.extend(["-k", key])
+    result = run_command(command)
+    if result.returncode != 0:
+        return None
+    value = result.stdout.strip()
+    return value or None
+
+
 def device_info(udid: str) -> Dict[str, Optional[str]]:
-    """Read basic device fields; unavailable fields are returned as None."""
+    """Read basic and battery information; unsupported fields are None."""
     require_tool("ideviceinfo")
-    fields = {
-        "Device": "DeviceName",
-        "Product type": "ProductType",
-        "iOS version": "ProductVersion",
-        "Build": "BuildVersion",
+    info = {
+        "Device": read_value(udid, "DeviceName"),
+        "Product type": read_value(udid, "ProductType"),
+        "iOS version": read_value(udid, "ProductVersion"),
+        "Build": read_value(udid, "BuildVersion"),
+        "Battery level": read_value(
+            udid, "BatteryCurrentCapacity", "com.apple.mobile.battery"
+        ),
+        "Charging": read_value(
+            udid, "BatteryIsCharging", "com.apple.mobile.battery"
+        ),
+        "External power": read_value(
+            udid, "ExternalConnected", "com.apple.mobile.battery"
+        ),
     }
-    info = {}
-    for label, key in fields.items():
-        result = run_command(["ideviceinfo", "-u", udid, "-k", key])
-        value = result.stdout.strip() if result.returncode == 0 else ""
-        info[label] = value or None
-    if not any(info.values()):
+    if not any(info[key] for key in ("Device", "Product type", "iOS version", "Build")):
         raise DeviceError(
             "Could not read device information. Unlock the device and accept "
             "the Trust This Computer prompt, then try again."
@@ -82,8 +98,3 @@ def select_device(requested_udid: Optional[str] = None) -> str:
             "Multiple devices are connected. Select one with --udid."
         )
     return devices[0]
-
-
-def report_error(error: Exception) -> int:
-    print("Error: {}".format(error), file=sys.stderr)
-    return 1
