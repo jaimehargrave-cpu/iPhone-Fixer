@@ -21,7 +21,27 @@ Linux, use your distribution's package manager.
 
 ## Run
 
-From the repository root:
+From the repository root, the quick-detect script prints details for the
+connected device:
+
+```bash
+chmod +x iphone-fixer-detect.sh
+./iphone-fixer-detect.sh
+```
+
+If you prefer not to set the executable bit, run it with Bash:
+
+```bash
+bash iphone-fixer-detect.sh
+```
+
+When multiple devices are connected, pass the target ID:
+
+```bash
+./iphone-fixer-detect.sh --udid DEVICE_UDID
+```
+
+The full CLI is also available:
 
 ```bash
 chmod +x bin/iphone-fixer
@@ -38,17 +58,13 @@ You can also run the Python CLI directly:
 python3 iphone_fixer/cli.py info
 ```
 
-If multiple devices are connected, `info` asks you to provide `--udid`.
 Commands only read information; this project does not perform restores,
 jailbreaks, downgrades, or other device modifications.
 
 ## Example output
 
 ```text
-$ ./bin/iphone-fixer status
-Connected iOS devices: 1
-
-$ ./bin/iphone-fixer info
+$ ./iphone-fixer-detect.sh
 Device:       Alex's iPhone
 Product type: iPhone15,2
 iOS version:  17.5.1
@@ -57,8 +73,8 @@ Status:       Connected
 ```
 
 Output depends on the connected device and installed `libimobiledevice`
-version. With no device connected, `status` prints `Connected iOS devices: 0`
-and exits with status 2. Device/tool errors are printed to stderr.
+version. With no device connected, the tool explains how to check the USB
+connection and trust prompt. Device/tool errors are printed to stderr.
 
 ## Project layout
 
@@ -70,6 +86,7 @@ iPhone-Fixer/
 │   ├── __init__.py
 │   ├── cli.py             # CLI commands and output
 │   └── device.py          # libimobiledevice detection and queries
+├── iphone-fixer-detect.sh # Quick device-info command
 ├── LICENSE
 └── README.md
 ```
