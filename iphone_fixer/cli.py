@@ -32,6 +32,17 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _yes_no(value: Optional[str]) -> str:
+    if value is None:
+        return "Unavailable"
+    normalized = value.strip().lower()
+    if normalized in ("true", "yes", "1"):
+        return "Yes"
+    if normalized in ("false", "no", "0"):
+        return "No"
+    return value
+
+
 def print_info(udid: str, include_udid: bool = False) -> None:
     info = device_info(udid)
     if include_udid:
@@ -52,17 +63,6 @@ def print_info(udid: str, include_udid: bool = False) -> None:
     print("Charging:     {}".format(_yes_no(charging)))
     print("External power: {}".format(_yes_no(external_power)))
     print("Status:       Connected")
-
-
-def _yes_no(value: Optional[str]) -> str:
-    if value is None:
-        return "Unavailable"
-    normalized = value.strip().lower()
-    if normalized in ("true", "yes", "1"):
-        return "Yes"
-    if normalized in ("false", "no", "0"):
-        return "No"
-    return value
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
