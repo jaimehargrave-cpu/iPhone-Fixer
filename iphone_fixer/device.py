@@ -56,16 +56,60 @@ def read_value(udid: str, key: str, domain: Optional[str] = None) -> Optional[st
     return value or None
 
 
+def _first_value(udid: str, keys: List[str], domain: Optional[str] = None) -> Optional[str]:
+    for key in keys:
+        value = read_value(udid, key, domain)
+        if value:
+            return value
+    return None
+
+
+def _sim_connected(status: Optional[str]) -> Optional[bool]:
+    """Infer SIM presence only from explicit, recognizable status values."""
+    if not status:
+        return None
+    normalized = status.strip().lower()
+    if any(token in normalized for token in ("no sim", "nosim", "absent", "not inserted")):
+        return False
+    if any(token in normalized for token in ("ready", "available", "inserted")):
+        return True
+    return None
+
+
 def device_info(udid: str) -> Dict[str, Optional[str]]:
-    """Read device, battery, and storage information when available."""
+    """Read device, network, battery, and storage data when available."""
     require_tool("ideviceinfo")
-    device_class = read_value(udid, "ProductName") or read_value(udid, "DeviceClass")
+    sim_status = _first_value(
+        udid,
+        ["SIMStatus", "kCTSIMSupportSIMStatus"],
+        "com.apple.commcenter",
+    )
     info = {
         "Device": read_value(udid, "DeviceName"),
-        "Device class": device_class,
+        "Device class": _first_value(udid, ["ProductName", "DeviceClass"]),
         "Product type": read_value(udid, "ProductType"),
         "iOS version": read_value(udid, "ProductVersion"),
         "Build": read_value(udid, "BuildVersion"),
+        "Serial number": read_value(udid, "SerialNumber"),
+        "Hardware model": read_value(udid, "HardwareModel"),
+        "CPU architecture": read_value(udid, "CPUArchitecture"),
+        "SIM status": sim_status,
+        "SIM connected": _sim_connected(sim_status),
+        "Carrier": _first_value(
+            udid,
+            ["CarrierName", "OperatorName", "CarrierBundleInfoString"],
+            "com.apple.commcenter",
+        ),
+        "Cellular technology": _first_value(
+            udid,
+            ["CurrentRadioAccessTechnology"],
+            "com.apple.commcenter",
+        ),
+        "Wi-Fi status": _first_value(
+            udid,
+            ["WiFiEnabled", "WiFiPower"],
+            "com.apple.mobile.wifi",
+        ),
         "Battery level": read_value(
             udid, "BatteryCurrentCapacity", "com.apple.mobile.battery"
         ),
@@ -81,6 +125,9 @@ def device_info(udid: str) -> Dict[str, Optional[str]]:
         "Available storage bytes": read_value(
             udid, "TotalDataAvailable", "com.apple.disk_usage"
         ),
+        # iOS does not provide a consistently available RAM-size key through
+        # ideviceinfo; do not guess from the model identifier.
+        "RAM bytes": None,
     }
     if not any(info[key] for key in ("Device", "Product type", "iOS version", "Build")):
         raise DeviceError(
@@ -102,7 +149,5 @@ def select_device(requested_udid: Optional[str] = None) -> str:
             "device, and accept the trust prompt if shown."
         )
     if len(devices) > 1:
-        raise DeviceError(
-            "Multiple devices are connected. Select one with --udid."
-        )
+        raise DeviceError("Multiple devices are connected. Select one with --udid.")
     return devices[0]
