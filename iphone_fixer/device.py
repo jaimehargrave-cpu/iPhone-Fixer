@@ -57,10 +57,12 @@ def read_value(udid: str, key: str, domain: Optional[str] = None) -> Optional[st
 
 
 def device_info(udid: str) -> Dict[str, Optional[str]]:
-    """Read basic and battery information; unsupported fields are None."""
+    """Read device, battery, and storage information when available."""
     require_tool("ideviceinfo")
+    device_class = read_value(udid, "ProductName") or read_value(udid, "DeviceClass")
     info = {
         "Device": read_value(udid, "DeviceName"),
+        "Device class": device_class,
         "Product type": read_value(udid, "ProductType"),
         "iOS version": read_value(udid, "ProductVersion"),
         "Build": read_value(udid, "BuildVersion"),
@@ -72,6 +74,12 @@ def device_info(udid: str) -> Dict[str, Optional[str]]:
         ),
         "External power": read_value(
             udid, "ExternalConnected", "com.apple.mobile.battery"
+        ),
+        "Total storage bytes": read_value(
+            udid, "TotalDataCapacity", "com.apple.disk_usage"
+        ),
+        "Available storage bytes": read_value(
+            udid, "TotalDataAvailable", "com.apple.disk_usage"
         ),
     }
     if not any(info[key] for key in ("Device", "Product type", "iOS version", "Build")):

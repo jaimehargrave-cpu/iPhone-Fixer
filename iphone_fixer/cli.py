@@ -43,26 +43,44 @@ def _yes_no(value: Optional[str]) -> str:
     return value
 
 
+def _storage_summary(info: dict) -> str:
+    try:
+        total = int(info["Total storage bytes"])
+        available = int(info["Available storage bytes"])
+        if total <= 0 or available < 0:
+            raise ValueError("invalid storage values")
+        used = max(0, total - available)
+        used_percent = round(100 * used / total)
+        # Decimal GB matches the units commonly used for advertised storage.
+        return "{:.1f} GB total, {:.1f} GB available ({}% used)".format(
+            total / 1_000_000_000,
+            available / 1_000_000_000,
+            used_percent,
+        )
+    except (TypeError, ValueError, ZeroDivisionError):
+        return "Unavailable"
+
+
 def print_info(udid: str, include_udid: bool = False) -> None:
     info = device_info(udid)
     if include_udid:
-        print("Device ID:    {}".format(udid))
-    print("Device:       {}".format(info["Device"] or "Unavailable"))
-    print("Product type: {}".format(info["Product type"] or "Unavailable"))
-    print("iOS version:  {}".format(info["iOS version"] or "Unavailable"))
-    print("Build:        {}".format(info["Build"] or "Unavailable"))
+        print("Device ID:      {}".format(udid))
+    print("Device:         {}".format(info["Device"] or "Unavailable"))
+    print("Device class:   {}".format(info["Device class"] or "Unavailable"))
+    print("Product type:   {}".format(info["Product type"] or "Unavailable"))
+    print("iOS version:    {}".format(info["iOS version"] or "Unavailable"))
+    print("Build:          {}".format(info["Build"] or "Unavailable"))
 
     battery = info["Battery level"]
-    charging = info["Charging"]
-    external_power = info["External power"]
     print(
-        "Battery:      {}%".format(battery)
+        "Battery:        {}%".format(battery)
         if battery is not None
-        else "Battery:      Unavailable"
+        else "Battery:        Unavailable"
     )
-    print("Charging:     {}".format(_yes_no(charging)))
-    print("External power: {}".format(_yes_no(external_power)))
-    print("Status:       Connected")
+    print("Charging:       {}".format(_yes_no(info["Charging"])))
+    print("External power: {}".format(_yes_no(info["External power"])))
+    print("Storage:        {}".format(_storage_summary(info)))
+    print("Status:         Connected")
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:

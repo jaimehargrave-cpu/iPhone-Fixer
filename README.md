@@ -22,7 +22,7 @@ Linux, use your distribution's package manager.
 ## Run
 
 From the repository root, the quick-detect script produces a report for every
-connected iOS device, including battery details when the device exposes them:
+connected iOS device, including battery and storage details when available:
 
 ```bash
 chmod +x iphone-fixer-detect.sh
@@ -59,24 +59,27 @@ You can also run the Python CLI directly:
 python3 iphone_fixer/cli.py report
 ```
 
-Battery data is read from the device's battery information domain. Some iOS
+Battery and storage values are read from iOS information domains. Some iOS
 versions or device states may not expose every field; unavailable values are
-shown as `Unavailable`. Commands only read information; this project does not
-perform restores, jailbreaks, downgrades, or other device modifications.
+shown as `Unavailable`. Storage is reported in decimal GB. Commands only read
+information; this project does not perform restores, jailbreaks, downgrades,
+or other device modifications.
 
 ## Example output
 
 ```text
 $ ./iphone-fixer-detect.sh
-Device ID:    0edc5b94c4f4a2b89535c7f11b07e5f0594e2bdf
-Device:       iPhone
-Product type: iPhone8,1
-iOS version:  15.8.8
-Build:        19H422
-Battery:      82%
-Charging:     No
-External power: No
-Status:       Connected
+Device ID:      0edc5b94c4f4a2b89535c7f11b07e5f0594e2bdf
+Device:         Kellen’s iPhone
+Device class:   iPhone
+Product type:   iPhone13,2
+iOS version:    26.4.2
+Build:          23E261
+Battery:        74%
+Charging:       Yes
+External power: Yes
+Storage:        128.0 GB total, 73.2 GB available (43% used)
+Status:         Connected
 ```
 
 With multiple devices, a blank line separates each device report. With no
